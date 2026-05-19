@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${article.id == null ? 'New Article' : 'Edit Article'} + ' – Alfaleus CMS'">Article – Alfaleus CMS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- Sidebar -->
+<div th:replace="~{admin/layout :: sidebar('new-article')}"></div>
+
+<div class="main-wrapper">
+    <!-- Topbar -->
+    <header class="topbar">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <a th:href="@{/admin/dashboard}" class="btn btn-ghost btn-sm" style="padding: 0.35rem 0.6rem;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </a>
+            <span class="topbar-title" th:text="${article.id == null ? 'Create New Article' : 'Edit Article'}">Article</span>
+        </div>
+        <div class="topbar-actions">
+            <button type="submit" form="articleForm" name="saveAsDraft"
+                    class="btn btn-ghost" id="save-draft-btn">Save Draft</button>
+            <button type="submit" form="articleForm"
+                    class="btn btn-primary" id="save-article-btn">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                Save Article
+            </button>
+        </div>
+    </header>
+
+    <main class="page-content">
+        <form th:action="@{/admin/article/save}" method="post" id="articleForm" th:object="${article}">
+            <input type="hidden" th:field="*{id}">
+
+            <div style="display: grid; grid-template-columns: 1fr 340px; gap: 1.75rem; align-items: start;">
+
+                <!-- ===== LEFT COLUMN: CONTENT ===== -->
+                <div>
+                    <div class="card" style="margin-bottom: 1.5rem;">
+                        <div class="card-body">
+                            <div class="form-group" style="margin-bottom: 1.25rem;">
+                                <label class="form-label">Article Title</label>
+                                <input id="article-title" type="text" th:field="*{title}" class="form-control"
+                                       placeholder="Enter a clear, compelling headline…" required
+                                       style="font-size: 1.1rem; font-weight: 600; padding: 0.85rem 1rem;">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Excerpt / Summary</label>
+                                <textarea id="article-excerpt" th:field="*{excerpt}" class="form-control" rows="3"
+                                          placeholder="A short 1–2 sentence description of the article…"></textarea>
+                                <span class="char-count" id="excerpt-count">0 / 200 characters</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rich Text Editor -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:inline; margin-right:6px; vertical-align:middle; color: var(--sage-500);">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                                Body Content
+                            </span>
+                            <span style="font-size: 0.78rem; color: var(--muted);">Supports rich formatting</span>
+                        </div>
+                        <div style="border: 1.5px solid var(--border); border-radius: 0 0 12px 12px; overflow: hidden;"
+                             id="editor-wrapper">
+                            <input type="hidden" name="bodyContent" id="bodyContent" th:value="${article.bodyContent}">
+                            <div id="quill-editor"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== RIGHT COLUMN: META ===== -->
+                <div style="position: sticky; top: 80px;">
+
+                    <!-- Publish Settings -->
+                    <div class="card" style="margin-bottom: 1.5rem;">
+                        <div class="card-header">
+                            <span class="card-title">Publish Settings</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">Status</label>
+                                <select th:field="*{status}" class="form-control" id="article-status">
+                                    <option value="DRAFT">📝 Draft</option>
+                                    <option value="PENDING_REVIEW">🔍 Pending Review</option>
+                                    <option value="PUBLISHED">✅ Published</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SEO Metadata -->
+                    <div class="card" style="margin-bottom: 1.5rem;">
+                        <div class="card-header">
+                            <span class="card-title">
+                                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:inline; margin-right:5px; vertical-align:middle; color: var(--sage-500);">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                                SEO Metadata
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group" style="margin-bottom: 1.25rem;">
+                                <label class="form-label">Meta Title <span style="color: var(--muted); font-weight: 400;">(max 60)</span></label>
+                                <input id="metaTitle" type="text" name="metaTitle" th:value="${metaTitle}"
+                                       class="form-control" required maxlength="60"
+                                       placeholder="SEO page title…">
+                                <span class="char-count" id="meta-title-count">0 / 60</span>
+                                <div class="seo-indicator" id="meta-title-bar">
+                                    <div class="seo-dot"></div><div class="seo-dot"></div><div class="seo-dot"></div>
+                                    <div class="seo-dot"></div><div class="seo-dot"></div>
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 1.25rem;">
+                                <label class="form-label">Meta Description <span style="color: var(--muted); font-weight: 400;">(max 160)</span></label>
+                                <textarea id="metaDescription" name="metaDescription"
+                                          class="form-control" required maxlength="160" rows="3"
+                                          placeholder="Compelling search engine description…"
+                                          th:text="${metaDescription}"></textarea>
+                                <span class="char-count" id="meta-desc-count">0 / 160</span>
+                                <div class="seo-indicator" id="meta-desc-bar">
+                                    <div class="seo-dot"></div><div class="seo-dot"></div><div class="seo-dot"></div>
+                                    <div class="seo-dot"></div><div class="seo-dot"></div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Focus Keyword</label>
+                                <input id="focusKeyword" type="text" name="focusKeyword" th:value="${focusKeyword}"
+                                       class="form-control" placeholder="e.g. cardiac stent technology">
+                            </div>
+                        </div>
+                    <!-- Featured Image -->
+                    <div class="card" style="margin-bottom: 1.5rem;">
+                        <div class="card-header">
+                            <span class="card-title">Featured Image</span>
+                        </div>
+                        <div class="card-body">
+                            <div id="featured-preview" th:if="${article.featuredImageUrl != null}"
+                                 style="margin-bottom: 1rem; border-radius: 8px; overflow: hidden;">
+                                <img th:src="${article.featuredImageUrl}" style="width:100%; height: 140px; object-fit: cover;">
+                            </div>
+                            <input type="hidden" name="featuredImageUrl" id="featured-image-url"
+                                   th:value="${article.featuredImageUrl}">
+                            <input type="hidden" name="featuredImageAlt" id="featured-image-alt"
+                                   th:value="${article.featuredImageAlt}">
+                            <div class="form-group" style="margin-bottom: .75rem;">
+                                <label class="form-label">Image URL</label>
+                                <input type="text" id="featured-url-input" class="form-control"
+                                       placeholder="/uploads/image.jpg or https://…"
+                                       th:value="${article.featuredImageUrl}"
+                                       oninput="document.getElementById('featured-image-url').value=this.value">
+                            </div>
+                            <div class="form-group" style="margin-bottom: .75rem;">
+                                <label class="form-label">Alt Text</label>
+                                <input type="text" id="featured-alt-input" class="form-control"
+                                       placeholder="Describe the image…"
+                                       th:value="${article.featuredImageAlt}"
+                                       oninput="document.getElementById('featured-image-alt').value=this.value">
+                            </div>
+                            <p style="font-size: 0.75rem; color: var(--muted);">
+                                Tip: Upload your image via the
+                                <a href="/admin/media" target="_blank" style="color:var(--sage-500);">Media Library</a>
+                                first, then paste the URL here.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Inline Media Upload -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Insert Media</span>
+                        </div>
+                        <div class="card-body">
+                            <!-- Image -->
+                            <div style="margin-bottom: 1.25rem;">
+                                <label class="form-label">Insert Image into Body</label>
+                                <input type="file" id="image-upload" accept="image/*" class="form-control" style="padding: 0.4rem;">
+                                <div class="form-group" style="margin-top:.5rem;">
+                                    <input type="text" id="img-alt-text" class="form-control" placeholder="Alt text (required)…">
+                                </div>
+                                <button type="button" id="upload-btn" class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;margin-top:.5rem;">
+                                    Upload &amp; Insert Image
+                                </button>
+                                <div id="upload-status" style="font-size:.78rem;color:var(--muted);text-align:center;margin-top:.4rem;"></div>
+                            </div>
+
+                            <!-- Video File -->
+                            <div style="margin-bottom: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                                <label class="form-label">Insert Video File into Body</label>
+                                <input type="file" id="video-upload" accept="video/mp4,video/webm,video/ogg" class="form-control" style="padding: 0.4rem;">
+                                <button type="button" id="video-upload-btn" class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;margin-top:.5rem;">
+                                    Upload &amp; Insert Video
+                                </button>
+                                <div id="video-upload-status" style="font-size:.78rem;color:var(--muted);text-align:center;margin-top:.4rem;"></div>
+                            </div>
+
+                            <!-- YouTube -->
+                            <div style="padding-top: 1rem; border-top: 1px solid var(--border);">
+                                <label class="form-label">Insert YouTube Video</label>
+                                <input type="text" id="yt-url" class="form-control" placeholder="https://youtube.com/watch?v=…">
+                                <button type="button" id="yt-insert-btn" class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;margin-top:.5rem;">
+                                    Insert YouTube Embed
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div> <!-- end right column (sticky) -->
+
+            </div> <!-- end grid -->
+        </form>
+    </main>
+</div>
+
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+<script th:inline="javascript">
+    // ========== QUILL SETUP ==========
+    const quill = new Quill('#quill-editor', {
+        theme: 'snow',
+        placeholder: 'Start writing your article here…',
+        modules: {
+            toolbar: [
+                [{ 'header': [2, 3, 4, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                ['blockquote', 'code-block'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                [{ 'color': [] }, { 'background': [] }],
+                ['link', 'image', 'video'],
+                ['clean']
+            ]
+        }
+    });
+
+    const existing = document.getElementById('bodyContent').value;
+    if (existing) quill.clipboard.dangerouslyPasteHTML(existing);
+
+    document.getElementById('articleForm').addEventListener('submit', function() {
+        document.getElementById('bodyContent').value = quill.root.innerHTML;
+    });
+
+    // ========== CHAR COUNTERS ==========
+    function charCounter(inputId, countId, max, barId) {
+        const el = document.getElementById(inputId);
+        const counter = document.getElementById(countId);
+        const bar = barId ? document.getElementById(barId) : null;
+        if (!el) return;
+
+        const update = () => {
+            const len = el.value.length;
+            counter.textContent = len + ' / ' + max;
+            const pct = len / max;
+            counter.className = 'char-count' + (pct > 0.9 ? ' danger' : pct > 0.75 ? ' warn' : '');
+            if (bar) {
+                const dots = bar.querySelectorAll('.seo-dot');
+                dots.forEach((dot, i) => {
+                    dot.classList.toggle('filled', i < Math.ceil(pct * dots.length));
+                });
+            }
+        };
+
+        el.addEventListener('input', update);
+        update();
+    }
+
+    charCounter('metaTitle', 'meta-title-count', 60, 'meta-title-bar');
+    charCounter('metaDescription', 'meta-desc-count', 160, 'meta-desc-bar');
+    charCounter('article-excerpt', 'excerpt-count', 200, null);
+
+    // ========== IMAGE UPLOAD ==========
+    document.getElementById('upload-btn').addEventListener('click', async () => {
+        const file = document.getElementById('image-upload').files[0];
+        const altText = document.getElementById('img-alt-text').value.trim();
+        const uploadStatus = document.getElementById('upload-status');
+        if (!file) return (uploadStatus.textContent = '✗ Please select an image first.');
+        if (!altText) return (uploadStatus.textContent = '✗ Alt text is required.');
+
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('alt_text', altText);
+        uploadStatus.textContent = 'Uploading…';
+
+        try {
+            const resp = await fetch('/admin/api/media/upload', { method: 'POST', body: fd });
+            const data = await resp.json();
+            if (data.error) throw new Error(data.error);
+            const range = quill.getSelection(true);
+            quill.insertEmbed(range.index, 'image', data.url);
+            quill.setSelection(range.index + 1);
+            uploadStatus.textContent = '✓ Image inserted!';
+            document.getElementById('image-upload').value = '';
+        } catch (e) {
+            uploadStatus.textContent = '✗ ' + e.message;
+        }
+    });
+
+    // ========== VIDEO FILE UPLOAD ==========
+    document.getElementById('video-upload-btn').addEventListener('click', async () => {
+        const file = document.getElementById('video-upload').files[0];
+        const status = document.getElementById('video-upload-status');
+        if (!file) return (status.textContent = '✗ Please select a video file.');
+
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('alt_text', file.name);
+        status.textContent = 'Uploading video… please wait.';
+
+        try {
+            const resp = await fetch('/admin/api/media/upload-video', { method: 'POST', body: fd });
+            const data = await resp.json();
+            if (data.error) throw new Error(data.error);
+
+            const range = quill.getSelection(true);
+            const videoHtml = `<div class="video-responsive"><video controls preload="metadata" style="width:100%;border-radius:8px;"><source src="${data.url}" type="${file.type}">Your browser does not support the video tag.</video></div><br>`;
+            quill.clipboard.dangerouslyPasteHTML(range.index, videoHtml);
+            status.textContent = '✓ Video inserted!';
+            document.getElementById('video-upload').value = '';
+        } catch (e) {
+            status.textContent = '✗ ' + e.message;
+        }
+    });
+
+    // ========== YOUTUBE INSERT ==========
+    document.getElementById('yt-insert-btn').addEventListener('click', async () => {
+        const url = document.getElementById('yt-url').value.trim();
+        if (!url) return alert('Please enter a YouTube URL.');
+
+        try {
+            const fd = new FormData();
+            fd.append('url', url);
+            const resp = await fetch('/admin/api/media/youtube', { method: 'POST', body: fd });
+            const data = await resp.json();
+            if (data.error) throw new Error(data.error);
+
+            const range = quill.getSelection(true);
+            const embedHtml = `<div class="yt-responsive"><iframe src="https://www.youtube.com/embed/${data.videoId}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div><br>`;
+            quill.clipboard.dangerouslyPasteHTML(range.index, embedHtml);
+            document.getElementById('yt-url').value = '';
+        } catch(e) {
+            alert('✗ ' + e.message);
+        }
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard – Alfaleus CMS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<!-- Sidebar -->
+<div th:replace="~{admin/layout :: sidebar('dashboard')}"></div>
+
+<div class="main-wrapper">
+    <!-- Topbar -->
+    <header class="topbar">
+        <span class="topbar-title">Content Dashboard</span>
+        <div class="topbar-actions">
+            <a th:href="@{/admin/article/create}" class="btn btn-primary" id="new-article-btn">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                New Article
+            </a>
+        </div>
+    </header>
+
+    <main class="page-content">
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon-wrap green">
+                    <svg fill="none" stroke="#3a7c55" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="stat-value" th:text="${totalCount}">0</div>
+                    <div class="stat-label">Total Articles</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon-wrap blue">
+                    <svg fill="none" stroke="#5b7cc4" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="stat-value" th:text="${publishedCount}">0</div>
+                    <div class="stat-label">Published</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon-wrap amber">
+                    <svg fill="none" stroke="#c78a3a" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="stat-value" th:text="${draftCount}">0</div>
+                    <div class="stat-label">Drafts</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon-wrap purple">
+                    <svg fill="none" stroke="#8b5cf6" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="stat-value" th:text="${pendingCount}">0</div>
+                    <div class="stat-label">Pending Review</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Articles Table -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">All Articles</span>
+                <span style="font-size: 0.82rem; color: var(--muted);"
+                      th:text="${articles.size() + ' articles total'}">0 articles total</span>
+            </div>
+
+            <!-- Empty State -->
+            <div th:if="${#lists.isEmpty(articles)}" class="empty-state">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <h3>No articles yet</h3>
+                <p>Start creating content for the Alfaleus knowledge base.</p>
+                <a th:href="@{/admin/article/create}" class="btn btn-primary">Write First Article</a>
+            </div>
+
+            <table th:if="${!#lists.isEmpty(articles)}" class="data-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Status</th>
+                        <th>Published</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="article : ${articles}">
+                        <td>
+                            <div class="article-title-cell">
+                                <span th:text="${article.title}">Article Title</span>
+                                <small th:text="'/' + ${article.slug}">/slug</small>
+                            </div>
+                        </td>
+                        <td style="font-size: 0.875rem;" th:text="${article.author.fullName}">Author</td>
+                        <td>
+                            <span th:if="${article.status.name() == 'PUBLISHED'}" class="badge badge-published">Published</span>
+                            <span th:if="${article.status.name() == 'DRAFT'}" class="badge badge-draft">Draft</span>
+                            <span th:if="${article.status.name() == 'PENDING_REVIEW'}" class="badge badge-pending">Pending</span>
+                        </td>
+                        <td style="font-size: 0.82rem; color: var(--muted);"
+                            th:text="${article.publishedDate != null ? #temporals.format(article.publishedDate, 'MMM dd, yyyy') : '—'}">Date</td>
+                        <td>
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <a th:href="@{/admin/article/{id}/edit(id=${article.id})}"
+                                   th:id="'edit-' + ${article.id}"
+                                   class="btn btn-ghost btn-sm">Edit</a>
+                                <a th:if="${article.status.name() == 'PUBLISHED'}"
+                                   th:href="@{'/' + article.slug}"
+                                   target="_blank"
+                                   class="btn btn-ghost btn-sm">
+                                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                    </svg>
+                                </a>
+                                <form th:action="@{/admin/article/{id}/delete(id=${article.id})}" method="post"
+                                      onsubmit="return confirm('Delete this article permanently?')">
+                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+</div>
+
+</body>
+</html>

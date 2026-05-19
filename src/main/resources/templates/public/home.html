@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alfaleus Medical – Knowledge Base</title>
+    <meta name="description" content="Clinical research, medical device insights, and patient education from the Alfaleus deep-tech team.">
+    <meta property="og:title" content="Alfaleus Medical – Knowledge Base">
+    <meta property="og:type" content="website">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/public.css}">
+</head>
+<body>
+
+<!-- ===== NAVIGATION ===== -->
+<nav class="site-nav">
+    <a href="/" class="nav-brand">
+        <div class="nav-brand-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+            </svg>
+        </div>
+        <div class="nav-brand-text">
+            <span class="brand-name">Alfaleus</span>
+            <span class="brand-tagline">Medical Devices</span>
+        </div>
+    </a>
+
+    <ul class="nav-links">
+        <li><a href="/">Research</a></li>
+        <li><a href="/sitemap.xml">Sitemap</a></li>
+        <li><a href="/admin/login" class="nav-cta">Staff Login</a></li>
+    </ul>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+    <div class="hero-content">
+        <div class="hero-badge">Live Knowledge Base</div>
+        <h1>Deep-Tech <em>Medical</em><br>Insights & Research</h1>
+        <p class="hero-desc">
+            Peer-reviewed clinical studies, engineering whitepapers, and patient education
+            from the Alfaleus research team — advancing human health through technology.
+        </p>
+    </div>
+</section>
+
+<!-- ===== ARTICLES SECTION ===== -->
+<section class="section">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-label">Latest Publications</div>
+            <h2 class="section-title">From Our Research Team</h2>
+            <p class="section-desc">Expert-authored content on medical devices, clinical outcomes, and patient care.</p>
+            
+            <!-- Search Bar -->
+            <form action="/" method="get" style="margin-top: 2rem; max-width: 500px; margin-left: auto; margin-right: auto; position: relative;">
+                <input type="text" name="query" th:value="${searchQuery}" placeholder="Search publications by title..." 
+                       style="width: 100%; padding: 0.8rem 1.2rem; border-radius: 99px; border: 1px solid var(--border); font-family: 'Outfit', sans-serif; font-size: 0.95rem; outline: none; transition: border-color 0.2s;">
+                <button type="submit" style="position: absolute; right: 6px; top: 6px; bottom: 6px; background: var(--brand); color: white; border: none; border-radius: 99px; padding: 0 1.25rem; font-family: 'Outfit', sans-serif; font-weight: 600; cursor: pointer;">Search</button>
+            </form>
+        </div>
+
+        <!-- Featured Article (first published article) -->
+        <a th:if="${!#lists.isEmpty(articles)}"
+           th:href="@{'/' + articles[0].slug}"
+           class="featured-article">
+            <div class="featured-thumb">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:80px;height:80px;color:rgba(255,255,255,0.2);">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+            </div>
+            <div class="featured-body">
+                <div class="featured-label">Featured Article</div>
+                <h2 th:text="${articles[0].title}">Article Title</h2>
+                <p th:text="${articles[0].excerpt}">Article excerpt goes here.</p>
+                <div class="featured-meta">
+                    <span th:text="${'By ' + articles[0].author.fullName}">By Author</span>
+                    <span>·</span>
+                    <span th:text="${#temporals.format(articles[0].publishedDate, 'MMMM dd, yyyy')}">Date</span>
+                    <span>·</span>
+                    <span style="color: var(--brand-light); font-weight: 600;">Read Article →</span>
+                </div>
+            </div>
+        </a>
+
+        <!-- Article Grid (remaining articles) -->
+        <div class="articles-grid" th:if="${articles.size() > 1}">
+            <a th:each="article, iterStat : ${articles}"
+               th:if="${iterStat.index > 0}"
+               th:href="@{'/' + article.slug}"
+               class="article-card">
+                <div class="article-card-thumb">
+                    <div class="article-card-thumb-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="article-card-body">
+                    <div class="article-category">Clinical Research</div>
+                    <h2 class="article-card-title" th:text="${article.title}">Title</h2>
+                    <p class="article-card-excerpt" th:text="${article.excerpt}">Excerpt</p>
+                    <div class="article-card-footer">
+                        <div class="article-author">
+                            <div class="author-avatar"
+                                 th:text="${article.author.fullName.substring(0,1).toUpperCase()}">A</div>
+                            <span class="author-name" th:text="${article.author.fullName}">Author</span>
+                        </div>
+                        <span class="read-more-arrow">
+                            Read
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Empty State -->
+        <div th:if="${#lists.isEmpty(articles)}"
+             style="text-align: center; padding: 6rem 2rem; color: var(--text-muted);">
+            <svg width="64" height="64" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                 style="margin: 0 auto 1.5rem; display: block; color: var(--border);">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <h3 style="font-family: 'Outfit'; font-size: 1.3rem; color: var(--text); margin-bottom: 0.5rem;">
+                No articles published yet
+            </h3>
+            <p>Our editorial team is preparing insightful content. Check back soon.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer">
+    <div class="footer-grid">
+        <div>
+            <div class="footer-brand-name">Alfaleus Medical</div>
+            <p class="footer-tagline">
+                Advancing human health through precision deep-tech medical device engineering
+                and evidence-based clinical research.
+            </p>
+        </div>
+        <div>
+            <div class="footer-heading">Research</div>
+            <ul class="footer-links">
+                <li><a href="/">All Publications</a></li>
+                <li><a href="/sitemap.xml">XML Sitemap</a></li>
+            </ul>
+        </div>
+        <div>
+            <div class="footer-heading">Platform</div>
+            <ul class="footer-links">
+                <li><a href="/admin/login">Staff Login</a></li>
+                <li><a href="/admin/dashboard">CMS Dashboard</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span>© 2026 Alfaleus Medical Devices. All rights reserved.</span>
+        <span>Built with Spring Boot &amp; Thymeleaf</span>
+    </div>
+</footer>
+
+</body>
+</html>

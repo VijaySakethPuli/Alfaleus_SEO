@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- ══ CORE SEO META ══════════════════════════════════════════════════════ -->
+    <title th:text="${meta != null ? meta.metaTitle : article.title}">Article</title>
+    <meta name="description"  th:if="${meta != null}" th:content="${meta.metaDescription}">
+    <meta name="keywords"     th:if="${meta != null && meta.focusKeyword != null}" th:content="${meta.focusKeyword}">
+    <meta name="robots"       content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    <meta name="author"       th:content="${article.author.fullName}">
+    <link rel="canonical"     th:if="${meta != null && meta.canonicalUrl != null && !meta.canonicalUrl.isEmpty()}"
+                              th:href="${meta.canonicalUrl}">
+
+    <!-- ══ OPEN GRAPH ════════════════════════════════════════════════════════ -->
+    <meta property="og:type"        content="article">
+    <meta property="og:site_name"   content="Alfaleus Medical">
+    <meta property="og:title"       th:content="${meta != null ? meta.metaTitle : article.title}">
+    <meta property="og:description" th:content="${meta != null ? meta.metaDescription : article.excerpt}">
+    <meta property="og:url"         th:content="'/' + ${article.slug}">
+    <meta property="og:image"       th:if="${article.featuredImageUrl != null}"
+                                    th:content="${article.featuredImageUrl}">
+    <meta property="article:published_time"
+          th:if="${article.publishedDate != null}"
+          th:content="${#temporals.format(article.publishedDate, 'yyyy-MM-dd')}">
+    <meta property="article:author" th:content="${article.author.fullName}">
+
+    <!-- ══ TWITTER CARD ══════════════════════════════════════════════════════ -->
+    <meta name="twitter:card"        content="summary_large_image">
+    <meta name="twitter:title"       th:content="${meta != null ? meta.metaTitle : article.title}">
+    <meta name="twitter:description" th:content="${meta != null ? meta.metaDescription : article.excerpt}">
+    <meta name="twitter:image"       th:if="${article.featuredImageUrl != null}"
+                                     th:content="${article.featuredImageUrl}">
+
+    <!-- ══ JSON-LD STRUCTURED DATA (MedicalWebPage + BreadcrumbList) ════════ -->
+    <script type="application/ld+json" th:inline="javascript">
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "MedicalWebPage",
+        "headline": /*[[${meta != null ? meta.metaTitle : article.title}]]*/ "",
+        "description": /*[[${meta != null ? meta.metaDescription : article.excerpt}]]*/ "",
+        "url": /*[[@{'/' + article.slug}]]*/ "",
+        "datePublished": /*[[${article.publishedDate != null ? #temporals.format(article.publishedDate, 'yyyy-MM-dd') : ''}]]*/ "",
+        "dateModified":  /*[[${article.updatedAt != null ? #temporals.format(article.updatedAt, 'yyyy-MM-dd') : ''}]]*/ "",
+        "author": {
+          "@type": "Person",
+          "name": /*[[${article.author.fullName}]]*/ "",
+          "jobTitle": /*[[${article.author.medicalCredentials != null ? article.author.medicalCredentials : 'Medical Writer'}]]*/ ""
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Alfaleus Medical",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "/images/logo.png"
+          }
+        },
+        "image": /*[[${article.featuredImageUrl != null ? article.featuredImageUrl : ''}]]*/ "",
+        "medicalAudience": {
+          "@type": "MedicalAudience",
+          "audienceType": "Patient"
+        },
+        "specialty": {
+          "@type": "MedicalSpecialty",
+          "name": /*[[${meta != null && meta.focusKeyword != null ? meta.focusKeyword : 'Medical Devices'}]]*/ ""
+        }
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "/" },
+          { "@type": "ListItem", "position": 2, "name": /*[[${article.title}]]*/ "", "item": /*[[@{'/' + article.slug}]]*/ "" }
+        ]
+      }
+    ]
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/public.css}">
+</head>
+<body>
+
+<!-- ===== NAVIGATION ===== -->
+<nav class="site-nav">
+    <a href="/" class="nav-brand">
+        <div class="nav-brand-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+            </svg>
+        </div>
+        <div class="nav-brand-text">
+            <span class="brand-name">Alfaleus</span>
+            <span class="brand-tagline">Medical Devices</span>
+        </div>
+    </a>
+    <ul class="nav-links">
+        <li><a href="/">Research</a></li>
+        <li><a href="/admin/login" class="nav-cta">Staff Login</a></li>
+    </ul>
+</nav>
+
+<!-- ===== ARTICLE LAYOUT ===== -->
+<div class="article-layout">
+    <main class="article-main">
+
+        <!-- Breadcrumb -->
+        <div class="article-breadcrumb">
+            <a href="/">Home</a>
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+            <span th:text="${article.title}">Article</span>
+        </div>
+
+        <!-- Article Header -->
+        <header class="article-header">
+            <h1 th:text="${article.title}">Article Title</h1>
+
+            <div class="article-header-meta">
+                <!-- Author -->
+                <div class="article-author">
+                    <div class="author-avatar" th:text="${article.author.fullName.substring(0,1).toUpperCase()}">A</div>
+                    <div>
+                        <div class="author-name" th:text="${article.author.fullName}">Author</div>
+                        <div class="article-date"
+                             th:text="${#temporals.format(article.publishedDate, 'MMMM dd, yyyy')}">Date</div>
+                    </div>
+                </div>
+
+                <!-- Reading time -->
+                <div style="display: flex; align-items: center; gap: 5px; background: var(--bg); padding: 4px 12px; border-radius: 99px; border: 1px solid var(--border);">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span style="font-family:'Outfit';font-size:0.78rem;font-weight:600;color:var(--text-muted);"
+                          th:text="${article.readingTimeMinutes + ' min read'}">5 min read</span>
+                </div>
+
+                <!-- Medical reviewer badge -->
+                <div th:if="${article.medicallyReviewedBy != null}"
+                     style="display:flex;align-items:center;gap:6px;background:#eaf5ef;padding:4px 12px;border-radius:99px;">
+                    <svg width="14" height="14" fill="none" stroke="#3a7c55" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                    <span style="font-family:'Outfit';font-size:0.78rem;font-weight:600;color:#3a7c55;"
+                          th:text="'Reviewed by ' + ${article.medicallyReviewedBy.fullName}">Reviewed</span>
+                </div>
+            </div>
+
+            <!-- Featured Image -->
+            <div th:if="${article.featuredImageUrl != null && !article.featuredImageUrl.isEmpty()}"
+                 style="margin: 1.75rem 0; border-radius: 14px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.1);">
+                <img th:src="${article.featuredImageUrl}"
+                     th:alt="${article.featuredImageAlt != null ? article.featuredImageAlt : article.title}"
+                     style="width:100%; max-height: 480px; object-fit: cover; display: block;">
+                <p th:if="${article.featuredImageAlt != null}"
+                   style="font-size:0.8rem;color:var(--text-muted);padding:0.5rem 1rem;background:var(--bg);margin:0;font-style:italic;"
+                   th:text="${article.featuredImageAlt}">Caption</p>
+            </div>
+
+            <p class="article-excerpt"
+               th:if="${article.excerpt != null && !article.excerpt.isEmpty()}"
+               th:text="${article.excerpt}">Excerpt</p>
+        </header>
+
+        <div class="article-divider"></div>
+
+        <!-- Article Body -->
+        <article class="article-content" th:utext="${article.bodyContent}">Content</article>
+
+        <!-- Article Footer -->
+        <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border);">
+            <div th:if="${meta != null && meta.focusKeyword != null && !meta.focusKeyword.isEmpty()}"
+                 style="display:flex;align-items:center;gap:.5rem;margin-bottom:1.5rem;">
+                <span style="font-family:'Outfit';font-size:.78rem;color:var(--text-muted);font-weight:600;">TOPIC:</span>
+                <span style="background:#eaf5ef;color:#3a7c55;font-family:'Outfit';font-size:.78rem;font-weight:700;padding:3px 10px;border-radius:99px;"
+                      th:text="${meta.focusKeyword}">keyword</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+                <a href="/" style="display:inline-flex;align-items:center;gap:.5rem;color:var(--brand-light);font-family:'Outfit';font-weight:600;text-decoration:none;font-size:.9rem;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Back to all articles
+                </a>
+                <!-- Social share -->
+                <div style="display:flex;gap:.75rem;align-items:center;">
+                    <span style="font-family:'Outfit';font-size:.78rem;color:var(--text-muted);font-weight:600;">SHARE:</span>
+                    <a th:href="'https://twitter.com/intent/tweet?text=' + ${article.title} + '&url=/' + ${article.slug}"
+                       target="_blank" rel="noopener"
+                       style="display:inline-flex;align-items:center;gap:4px;background:#1da1f2;color:#fff;padding:5px 12px;border-radius:6px;font-family:'Outfit';font-size:.78rem;font-weight:700;text-decoration:none;">
+                        X / Twitter
+                    </a>
+                    <a th:href="'https://www.linkedin.com/shareArticle?mini=true&url=/' + ${article.slug} + '&title=' + ${article.title}"
+                       target="_blank" rel="noopener"
+                       style="display:inline-flex;align-items:center;gap:4px;background:#0077b5;color:#fff;padding:5px 12px;border-radius:6px;font-family:'Outfit';font-size:.78rem;font-weight:700;text-decoration:none;">
+                        LinkedIn
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="article-sidebar">
+        <!-- Author Widget -->
+        <div class="sidebar-widget">
+            <div class="widget-title">About the Author</div>
+            <div class="author-widget-body">
+                <div class="author-widget-avatar" th:text="${article.author.fullName.substring(0,1).toUpperCase()}">A</div>
+                <div>
+                    <div class="author-widget-name" th:text="${article.author.fullName}">Author</div>
+                    <div class="author-widget-credentials"
+                         th:if="${article.author.medicalCredentials != null}"
+                         th:text="${article.author.medicalCredentials}">MD, PhD</div>
+                    <p class="author-widget-bio"
+                       th:if="${article.author.bio != null && !article.author.bio.isEmpty()}"
+                       th:text="${article.author.bio}">Bio here.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Article Details Widget -->
+        <div class="sidebar-widget" th:if="${meta != null}">
+            <div class="widget-title">Article Details</div>
+            <div style="font-size:.82rem;color:var(--text-muted);display:flex;flex-direction:column;gap:.75rem;">
+                <div th:if="${article.publishedDate != null}">
+                    <div style="font-weight:600;color:var(--text);margin-bottom:2px;font-family:'Outfit';">Published</div>
+                    <span th:text="${#temporals.format(article.publishedDate,'MMMM dd, yyyy')}">Date</span>
+                </div>
+                <div>
+                    <div style="font-weight:600;color:var(--text);margin-bottom:2px;font-family:'Outfit';">Reading Time</div>
+                    <span th:text="${article.readingTimeMinutes + ' min read'}">5 min</span>
+                </div>
+                <div th:if="${meta.focusKeyword != null && !meta.focusKeyword.isEmpty()}">
+                    <div style="font-weight:600;color:var(--text);margin-bottom:2px;font-family:'Outfit';">Focus Topic</div>
+                    <span th:text="${meta.focusKeyword}">keyword</span>
+                </div>
+                <div th:if="${article.updatedAt != null}">
+                    <div style="font-weight:600;color:var(--text);margin-bottom:2px;font-family:'Outfit';">Last Updated</div>
+                    <span th:text="${#temporals.format(article.updatedAt,'MMM dd, yyyy')}">Date</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back CTA -->
+        <a href="/" style="display:block;background:var(--brand);color:white;text-align:center;padding:1rem;border-radius:12px;text-decoration:none;font-family:'Outfit';font-weight:600;font-size:.9rem;transition:background .2s;"
+           onmouseover="this.style.background='#3a6142'" onmouseout="this.style.background='#2b4c3e'">
+            ← Explore All Research
+        </a>
+    </aside>
+</div>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer">
+    <div class="footer-grid">
+        <div>
+            <div class="footer-brand-name">Alfaleus Medical</div>
+            <p class="footer-tagline">Advancing human health through precision deep-tech medical device engineering and evidence-based clinical research.</p>
+        </div>
+        <div>
+            <div class="footer-heading">Research</div>
+            <ul class="footer-links">
+                <li><a href="/">All Publications</a></li>
+                <li><a href="/sitemap.xml">XML Sitemap</a></li>
+                <li><a href="/robots.txt">Robots.txt</a></li>
+            </ul>
+        </div>
+        <div>
+            <div class="footer-heading">Platform</div>
+            <ul class="footer-links">
+                <li><a href="/admin/login">Staff Login</a></li>
+                <li><a href="/admin/dashboard">CMS Dashboard</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span>© 2026 Alfaleus Medical Devices. All rights reserved.</span>
+        <span>SEO-Optimized · Schema.org MedicalWebPage</span>
+    </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Library – Alfaleus CMS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <style>
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.25rem;
+        }
+        .media-item {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+        .media-item:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+        .media-thumb {
+            width: 100%; height: 160px;
+            object-fit: cover;
+            display: block;
+            background: var(--sage-50);
+        }
+        .media-thumb-video {
+            width: 100%; height: 160px;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, var(--sage-700), var(--sage-900));
+        }
+        .media-thumb-video svg { width: 48px; height: 48px; color: rgba(255,255,255,0.6); }
+        .media-info {
+            padding: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+        .media-type-badge {
+            font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 2px 8px; border-radius: 99px;
+            display: inline-block; margin-bottom: 4px;
+        }
+        .badge-image { background: #e8f5ea; color: #3a7c55; }
+        .badge-youtube { background: #fee2e2; color: #b91c1c; }
+        .badge-video-local { background: #eff3fb; color: #5b7cc4; }
+        .media-alt { font-size: 0.8rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .media-url {
+            font-size: 0.72rem; color: var(--sage-500);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            cursor: pointer; margin-top: 4px;
+        }
+        .media-url:hover { text-decoration: underline; }
+
+        /* Upload tabs */
+        .upload-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 1.5rem; }
+        .upload-tab {
+            padding: 0.65rem 1.25rem;
+            font-size: 0.875rem; font-weight: 600;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            color: var(--muted);
+            background: none; border-top: none; border-left: none; border-right: none;
+            transition: color 0.2s, border-color 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+        .upload-tab.active { color: var(--sage-600); border-bottom-color: var(--sage-500); }
+        .upload-tab:hover { color: var(--sage-500); }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .drop-zone.drag-over { border-color: var(--sage-400); background: var(--sage-50); }
+        .drop-zone svg { width: 48px; height: 48px; color: var(--sage-300); margin: 0 auto 1rem; display: block; }
+        .drop-zone p { font-size: 0.9rem; color: var(--muted); margin-bottom: 0.5rem; }
+
+        .upload-progress {
+            height: 4px; background: var(--border); border-radius: 2px;
+            margin-top: 0.75rem; overflow: hidden; display: none;
+        }
+        .upload-progress-bar {
+            height: 100%; background: var(--sage-500);
+            border-radius: 2px; transition: width 0.3s;
+            width: 0%;
+        }
+        .copied-toast {
+            position: fixed; bottom: 2rem; right: 2rem;
+            background: var(--sage-700); color: white;
+            padding: 0.75rem 1.25rem; border-radius: 8px;
+            font-size: 0.875rem; font-weight: 600;
+            opacity: 0; transition: opacity 0.3s;
+            z-index: 9999; pointer-events: none;
+        }
+        .copied-toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{admin/layout :: sidebar('media')}"></div>
+
+<div class="main-wrapper">
+    <header class="topbar">
+        <span class="topbar-title">Media Library</span>
+        <div class="topbar-actions">
+            <a th:href="@{/admin/dashboard}" class="btn btn-ghost">← Dashboard</a>
+        </div>
+    </header>
+
+    <main class="page-content">
+
+        <!-- Upload Card -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <div class="card-header">
+                <span class="card-title">Upload New Media</span>
+                <span style="font-size: 0.8rem; color: var(--muted);">Images up to 20MB · Videos up to 100MB</span>
+            </div>
+            <div class="card-body">
+                <div class="upload-tabs">
+                    <button class="upload-tab active" onclick="switchTab('image', this)">
+                        🖼 Photo / Image
+                    </button>
+                    <button class="upload-tab" onclick="switchTab('video', this)">
+                        🎬 Video File
+                    </button>
+                    <button class="upload-tab" onclick="switchTab('youtube', this)">
+                        ▶️ YouTube Embed
+                    </button>
+                </div>
+
+                <!-- IMAGE TAB -->
+                <div id="tab-image" class="tab-panel active">
+                    <div class="drop-zone" id="img-drop-zone">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <p>Drag &amp; drop photos here, or <strong>click to browse</strong></p>
+                        <p style="font-size: 0.78rem;">JPEG, PNG, WebP, GIF, SVG</p>
+                        <input type="file" id="img-file-input" accept="image/*" style="display:none" multiple>
+                    </div>
+                    <div class="upload-progress" id="img-progress">
+                        <div class="upload-progress-bar" id="img-progress-bar"></div>
+                    </div>
+                    <div class="form-grid" style="margin-top: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Alt Text <span style="color: #b91c1c;">*</span></label>
+                            <input type="text" id="img-alt" class="form-control" placeholder="Describe the image for screen readers…">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Caption (optional)</label>
+                            <input type="text" id="img-caption" class="form-control" placeholder="Image caption for display…">
+                        </div>
+                    </div>
+                    <button type="button" id="img-upload-btn" class="btn btn-primary" style="margin-top: 1rem;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                        </svg>
+                        Upload Image
+                    </button>
+                    <span id="img-status" style="font-size: 0.82rem; color: var(--muted); margin-left: 1rem;"></span>
+                </div>
+
+                <!-- VIDEO TAB -->
+                <div id="tab-video" class="tab-panel">
+                    <div class="drop-zone" id="vid-drop-zone">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                  d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                        <p>Drag &amp; drop video files here, or <strong>click to browse</strong></p>
+                        <p style="font-size: 0.78rem;">MP4, WebM, OGG (max 100MB)</p>
+                        <input type="file" id="vid-file-input" accept="video/mp4,video/webm,video/ogg" style="display:none">
+                    </div>
+                    <div class="upload-progress" id="vid-progress">
+                        <div class="upload-progress-bar" id="vid-progress-bar"></div>
+                    </div>
+                    <div class="form-grid" style="margin-top: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Alt Text / Title</label>
+                            <input type="text" id="vid-alt" class="form-control" placeholder="Describe the video content…">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Caption (optional)</label>
+                            <input type="text" id="vid-caption" class="form-control" placeholder="Video caption…">
+                        </div>
+                    </div>
+                    <button type="button" id="vid-upload-btn" class="btn btn-primary" style="margin-top: 1rem;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                        </svg>
+                        Upload Video
+                    </button>
+                    <span id="vid-status" style="font-size: 0.82rem; color: var(--muted); margin-left: 1rem;"></span>
+                </div>
+
+                <!-- YOUTUBE TAB -->
+                <div id="tab-youtube" class="tab-panel">
+                    <div class="form-grid cols-1" style="max-width: 600px;">
+                        <div class="form-group">
+                            <label class="form-label">YouTube Video URL</label>
+                            <input type="url" id="yt-url" class="form-control"
+                                   placeholder="https://www.youtube.com/watch?v=…">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Title / Alt Text</label>
+                            <input type="text" id="yt-alt" class="form-control" placeholder="Video title for accessibility…">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Caption (optional)</label>
+                            <input type="text" id="yt-caption" class="form-control" placeholder="Caption to display below embed…">
+                        </div>
+                    </div>
+                    <button type="button" id="yt-embed-btn" class="btn btn-primary" style="margin-top: 1rem;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                        </svg>
+                        Save YouTube Embed
+                    </button>
+                    <span id="yt-status" style="font-size: 0.82rem; color: var(--muted); margin-left: 1rem;"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Media Grid -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">All Media</span>
+                <span style="font-size: 0.82rem; color: var(--muted);"
+                      th:text="${mediaItems.size() + ' items'}">0 items</span>
+            </div>
+
+            <div th:if="${#lists.isEmpty(mediaItems)}" class="empty-state">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <h3>No media yet</h3>
+                <p>Upload your first image or video above to get started.</p>
+            </div>
+
+            <div th:if="${!#lists.isEmpty(mediaItems)}" style="padding: 1.5rem;">
+                <div class="media-grid" id="media-grid">
+                    <div class="media-item" th:each="item : ${mediaItems}">
+                        <!-- Image Thumbnail -->
+                        <img th:if="${item.mediaType.name() == 'IMAGE'}"
+                             class="media-thumb"
+                             th:src="${item.filePathOrUrl}"
+                             th:alt="${item.altText}">
+                        <!-- Local Video Thumbnail -->
+                        <div class="media-thumb-video" th:if="${item.mediaType.name() == 'VIDEO_LOCAL'}">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                      d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <!-- YouTube Thumbnail -->
+                        <img th:if="${item.mediaType.name() == 'VIDEO_YOUTUBE'}"
+                             class="media-thumb"
+                             th:src="'https://img.youtube.com/vi/' + ${item.filePathOrUrl} + '/mqdefault.jpg'"
+                             th:alt="${item.altText}">
+                        <div class="media-info">
+                            <span th:if="${item.mediaType.name() == 'IMAGE'}" class="media-type-badge badge-image">Image</span>
+                            <span th:if="${item.mediaType.name() == 'VIDEO_YOUTUBE'}" class="media-type-badge badge-youtube">YouTube</span>
+                            <span th:if="${item.mediaType.name() == 'VIDEO_LOCAL'}" class="media-type-badge badge-video-local">Video</span>
+                            <div class="media-alt" th:text="${item.altText != null ? item.altText : '(no alt)'}">Alt text</div>
+                            <div class="media-url"
+                                 th:text="${item.filePathOrUrl}"
+                                 th:data-url="${item.filePathOrUrl}"
+                                 onclick="copyUrl(this)">url</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<div class="copied-toast" id="copied-toast">✓ URL copied to clipboard!</div>
+
+<script>
+// ── Tab switching ──────────────────────────────────────────────────────────
+function switchTab(name, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.upload-tab').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+}
+
+// ── Copy URL ───────────────────────────────────────────────────────────────
+function copyUrl(el) {
+    const url = el.dataset.url;
+    navigator.clipboard.writeText(url).then(() => {
+        const toast = document.getElementById('copied-toast');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+    });
+}
+
+// ── Drag & Drop helper ─────────────────────────────────────────────────────
+function setupDropZone(zoneId, inputId) {
+    const zone = document.getElementById(zoneId);
+    const input = document.getElementById(inputId);
+    zone.addEventListener('click', () => input.click());
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        if (e.dataTransfer.files.length) input.files = e.dataTransfer.files;
+    });
+}
+setupDropZone('img-drop-zone', 'img-file-input');
+setupDropZone('vid-drop-zone', 'vid-file-input');
+
+// ── Upload with progress ───────────────────────────────────────────────────
+async function uploadWithProgress(url, formData, progressBarId, progressWrapperId) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', url);
+        const bar = document.getElementById(progressBarId);
+        const wrap = document.getElementById(progressWrapperId);
+        wrap.style.display = 'block';
+        bar.style.width = '0%';
+        xhr.upload.onprogress = e => {
+            if (e.lengthComputable) bar.style.width = Math.round(e.loaded / e.total * 100) + '%';
+        };
+        xhr.onload = () => {
+            bar.style.width = '100%';
+            setTimeout(() => { wrap.style.display = 'none'; bar.style.width = '0%'; }, 1000);
+            try { resolve(JSON.parse(xhr.responseText)); }
+            catch(e) { reject(new Error(xhr.responseText)); }
+        };
+        xhr.onerror = () => reject(new Error('Network error'));
+        xhr.send(formData);
+    });
+}
+
+// ── Image Upload ───────────────────────────────────────────────────────────
+document.getElementById('img-upload-btn').addEventListener('click', async () => {
+    const file = document.getElementById('img-file-input').files[0];
+    const alt  = document.getElementById('img-alt').value.trim();
+    const cap  = document.getElementById('img-caption').value.trim();
+    const status = document.getElementById('img-status');
+
+    if (!file) return (status.textContent = '✗ Please select an image.');
+    if (!alt)  return (status.textContent = '✗ Alt text is required.');
+
+    status.textContent = 'Uploading…';
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('alt_text', alt);
+    if (cap) fd.append('caption', cap);
+
+    try {
+        const data = await uploadWithProgress('/admin/api/media/upload', fd, 'img-progress-bar', 'img-progress');
+        if (data.error) throw new Error(data.error);
+        status.textContent = '✓ Uploaded! URL: ' + data.url;
+        addMediaCard('IMAGE', data.url, alt);
+        document.getElementById('img-file-input').value = '';
+        document.getElementById('img-alt').value = '';
+        document.getElementById('img-caption').value = '';
+    } catch(e) {
+        status.textContent = '✗ ' + e.message;
+    }
+});
+
+// ── Video Upload ───────────────────────────────────────────────────────────
+document.getElementById('vid-upload-btn').addEventListener('click', async () => {
+    const file = document.getElementById('vid-file-input').files[0];
+    const alt  = document.getElementById('vid-alt').value.trim();
+    const cap  = document.getElementById('vid-caption').value.trim();
+    const status = document.getElementById('vid-status');
+
+    if (!file) return (status.textContent = '✗ Please select a video file.');
+
+    status.textContent = 'Uploading… this may take a moment for large files.';
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('alt_text', alt || 'Video');
+    if (cap) fd.append('caption', cap);
+
+    try {
+        const data = await uploadWithProgress('/admin/api/media/upload-video', fd, 'vid-progress-bar', 'vid-progress');
+        if (data.error) throw new Error(data.error);
+        status.textContent = '✓ Video uploaded! URL: ' + data.url;
+        addMediaCard('VIDEO_LOCAL', data.url, alt);
+        document.getElementById('vid-file-input').value = '';
+    } catch(e) {
+        status.textContent = '✗ ' + e.message;
+    }
+});
+
+// ── YouTube Embed ──────────────────────────────────────────────────────────
+document.getElementById('yt-embed-btn').addEventListener('click', async () => {
+    const url = document.getElementById('yt-url').value.trim();
+    const alt = document.getElementById('yt-alt').value.trim();
+    const cap = document.getElementById('yt-caption').value.trim();
+    const status = document.getElementById('yt-status');
+
+    if (!url) return (status.textContent = '✗ Please enter a YouTube URL.');
+
+    status.textContent = 'Saving…';
+    const fd = new FormData();
+    fd.append('url', url);
+    fd.append('alt_text', alt || 'YouTube video');
+    if (cap) fd.append('caption', cap);
+
+    try {
+        const resp = await fetch('/admin/api/media/youtube', { method: 'POST', body: fd });
+        const data = await resp.json();
+        if (data.error) throw new Error(data.error);
+        status.textContent = '✓ Saved! Video ID: ' + data.videoId;
+        addMediaCard('VIDEO_YOUTUBE', data.videoId, alt);
+        document.getElementById('yt-url').value = '';
+    } catch(e) {
+        status.textContent = '✗ ' + e.message;
+    }
+});
+
+// ── Add card to gallery dynamically ───────────────────────────────────────
+function addMediaCard(type, urlOrId, alt) {
+    const grid = document.getElementById('media-grid');
+    if (!grid) return location.reload();
+
+    const card = document.createElement('div');
+    card.className = 'media-item';
+
+    let thumb = '';
+    let badge = '';
+    if (type === 'IMAGE') {
+        thumb = `<img class="media-thumb" src="${urlOrId}" alt="${alt}">`;
+        badge = '<span class="media-type-badge badge-image">Image</span>';
+    } else if (type === 'VIDEO_LOCAL') {
+        thumb = `<div class="media-thumb-video"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg></div>`;
+        badge = '<span class="media-type-badge badge-video-local">Video</span>';
+    } else {
+        thumb = `<img class="media-thumb" src="https://img.youtube.com/vi/${urlOrId}/mqdefault.jpg" alt="${alt}">`;
+        badge = '<span class="media-type-badge badge-youtube">YouTube</span>';
+    }
+
+    const displayUrl = type === 'VIDEO_YOUTUBE' ? urlOrId : urlOrId;
+    card.innerHTML = `${thumb}<div class="media-info">${badge}<div class="media-alt">${alt || '(no alt)'}</div><div class="media-url" data-url="${displayUrl}" onclick="copyUrl(this)">${displayUrl}</div></div>`;
+    grid.insertBefore(card, grid.firstChild);
+}
+</script>
+</body>
+</html>
