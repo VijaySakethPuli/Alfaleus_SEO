@@ -118,7 +118,7 @@
                         <td>
                             <div class="article-title-cell">
                                 <span th:text="${article.title}">Article Title</span>
-                                <small th:text="'/' + ${article.slug}">/slug</small>
+                                <small th:text="'/article/' + ${article.slug}">/article/slug</small>
                             </div>
                         </td>
                         <td style="font-size: 0.875rem;" th:text="${article.author.fullName}">Author</td>
@@ -135,7 +135,7 @@
                                    th:id="'edit-' + ${article.id}"
                                    class="btn btn-ghost btn-sm">Edit</a>
                                 <a th:if="${article.status.name() == 'PUBLISHED'}"
-                                   th:href="@{'/' + article.slug}"
+                                   th:href="@{'/article/' + ${article.slug}}"
                                    target="_blank"
                                    class="btn btn-ghost btn-sm">
                                     <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">

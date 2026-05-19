@@ -18,7 +18,7 @@
     <meta property="og:site_name"   content="Alfaleus Medical">
     <meta property="og:title"       th:content="${meta != null ? meta.metaTitle : article.title}">
     <meta property="og:description" th:content="${meta != null ? meta.metaDescription : article.excerpt}">
-    <meta property="og:url"         th:content="'/' + ${article.slug}">
+    <meta property="og:url"         th:content="'/article/' + ${article.slug}">
     <meta property="og:image"       th:if="${article.featuredImageUrl != null}"
                                     th:content="${article.featuredImageUrl}">
     <meta property="article:published_time"
@@ -41,7 +41,7 @@
         "@type": "MedicalWebPage",
         "headline": /*[[${meta != null ? meta.metaTitle : article.title}]]*/ "",
         "description": /*[[${meta != null ? meta.metaDescription : article.excerpt}]]*/ "",
-        "url": /*[[@{'/' + article.slug}]]*/ "",
+        "url": /*[[@{'/article/' + ${article.slug}}]]*/ "",
         "datePublished": /*[[${article.publishedDate != null ? #temporals.format(article.publishedDate, 'yyyy-MM-dd') : ''}]]*/ "",
         "dateModified":  /*[[${article.updatedAt != null ? #temporals.format(article.updatedAt, 'yyyy-MM-dd') : ''}]]*/ "",
         "author": {
@@ -72,7 +72,7 @@
         "@type": "BreadcrumbList",
         "itemListElement": [
           { "@type": "ListItem", "position": 1, "name": "Home", "item": "/" },
-          { "@type": "ListItem", "position": 2, "name": /*[[${article.title}]]*/ "", "item": /*[[@{'/' + article.slug}]]*/ "" }
+          { "@type": "ListItem", "position": 2, "name": /*[[${article.title}]]*/ "", "item": /*[[@{'/article/' + ${article.slug}}]]*/ "" }
         ]
       }
     ]
@@ -192,12 +192,12 @@
                 <!-- Social share -->
                 <div style="display:flex;gap:.75rem;align-items:center;">
                     <span style="font-family:'Outfit';font-size:.78rem;color:var(--text-muted);font-weight:600;">SHARE:</span>
-                    <a th:href="'https://twitter.com/intent/tweet?text=' + ${article.title} + '&url=/' + ${article.slug}"
+                    <a th:href="'https://twitter.com/intent/tweet?text=' + ${article.title} + '&url=/article/' + ${article.slug}"
                        target="_blank" rel="noopener"
                        style="display:inline-flex;align-items:center;gap:4px;background:#1da1f2;color:#fff;padding:5px 12px;border-radius:6px;font-family:'Outfit';font-size:.78rem;font-weight:700;text-decoration:none;">
                         X / Twitter
                     </a>
-                    <a th:href="'https://www.linkedin.com/shareArticle?mini=true&url=/' + ${article.slug} + '&title=' + ${article.title}"
+                    <a th:href="'https://www.linkedin.com/shareArticle?mini=true&url=/article/' + ${article.slug} + '&title=' + ${article.title}"
                        target="_blank" rel="noopener"
                        style="display:inline-flex;align-items:center;gap:4px;background:#0077b5;color:#fff;padding:5px 12px;border-radius:6px;font-family:'Outfit';font-size:.78rem;font-weight:700;text-decoration:none;">
                         LinkedIn

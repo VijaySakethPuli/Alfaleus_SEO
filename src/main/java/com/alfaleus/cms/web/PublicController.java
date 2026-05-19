@@ -31,18 +31,22 @@ public class PublicController {
         return "public/home";
     }
 
-    @GetMapping("/{slug}")
+    @GetMapping("/article/{slug}")
     public String viewArticle(@PathVariable String slug, Model model) {
-        Article article = articleService.getArticleBySlug(slug);
-        
-        // Ensure article is published
-        if (!article.getStatus().name().equals("PUBLISHED")) {
-            return "error/404";
+        try {
+            Article article = articleService.getArticleBySlug(slug);
+            
+            // Ensure article is published
+            if (!article.getStatus().name().equals("PUBLISHED")) {
+                return "redirect:/";
+            }
+            
+            model.addAttribute("article", article);
+            model.addAttribute("meta", article.getSeoMetadata());
+            return "public/article";
+        } catch (Exception e) {
+            return "redirect:/";
         }
-        
-        model.addAttribute("article", article);
-        model.addAttribute("meta", article.getSeoMetadata());
-        return "public/article";
     }
 
     @GetMapping(value = "/sitemap.xml", produces = MediaType.APPLICATION_XML_VALUE)
@@ -70,7 +74,7 @@ public class PublicController {
         // Add articles
         for (Article article : publishedArticles) {
             xml.append("  <url>\n");
-            xml.append("    <loc>").append(baseUrl).append("/").append(article.getSlug()).append("</loc>\n");
+            xml.append("    <loc>").append(baseUrl).append("/article/").append(article.getSlug()).append("</loc>\n");
             
             String lastMod = article.getUpdatedAt() != null ? article.getUpdatedAt().format(formatter) : 
                             (article.getPublishedDate() != null ? article.getPublishedDate().format(formatter) : "");
@@ -108,8 +112,8 @@ public class PublicController {
         for (Article article : publishedArticles) {
             xml.append("    <item>\n");
             xml.append("      <title><![CDATA[").append(article.getTitle()).append("]]></title>\n");
-            xml.append("      <link>").append(baseUrl).append("/").append(article.getSlug()).append("</link>\n");
-            xml.append("      <guid>").append(baseUrl).append("/").append(article.getSlug()).append("</guid>\n");
+            xml.append("      <link>").append(baseUrl).append("/article/").append(article.getSlug()).append("</link>\n");
+            xml.append("      <guid>").append(baseUrl).append("/article/").append(article.getSlug()).append("</guid>\n");
             if (article.getExcerpt() != null) {
                 xml.append("      <description><![CDATA[").append(article.getExcerpt()).append("]]></description>\n");
             }

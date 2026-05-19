@@ -65,7 +65,7 @@
 
         <!-- Featured Article (first published article) -->
         <a th:if="${!#lists.isEmpty(articles)}"
-           th:href="@{'/' + articles[0].slug}"
+           th:href="@{'/article/' + ${articles[0].slug}}"
            class="featured-article">
             <div class="featured-thumb">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:80px;height:80px;color:rgba(255,255,255,0.2);">
@@ -91,7 +91,7 @@
         <div class="articles-grid" th:if="${articles.size() > 1}">
             <a th:each="article, iterStat : ${articles}"
                th:if="${iterStat.index > 0}"
-               th:href="@{'/' + article.slug}"
+               th:href="@{'/article/' + ${article.slug}}"
                class="article-card">
                 <div class="article-card-thumb">
                     <div class="article-card-thumb-icon">
